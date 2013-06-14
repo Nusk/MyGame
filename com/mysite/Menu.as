@@ -32,7 +32,7 @@
 		
 		private function init(e:Event){ //Тут будем создавать меню
 			removeEventListener(Event.ADDED_TO_STAGE, init); //удаляем уже ненужный слушатель событий
-			MovieClip(parent).setChildIndex(MovieClip(parent).soundButton, MovieClip(parent).soundButton.parent.numChildren-1); //Перемещаем енопку переключения звука наверх
+			MovieClip(parent).setChildIndex(MovieClip(parent).soundButton, MovieClip(parent).numChildren-1); //Перемещаем енопку переключения звука наверх
 			menuBuilder(); //А потом, собственно, создаём меню
 			animatePrincess(); //Помимо этого запускаем анимацию прицессы
 		}
@@ -57,16 +57,9 @@
 				menuItems[i].name = i; //Даём ей имя, чтобы потом можно было определить, что это за кнопка
 				menuItems[i].x = stage.stageWidth/2; //Ставим каждую кнопку в середину по координате Х
 				menuItems[i].y = 400 + 75 * i; //И на начальную позицию У
-				menuItems[i].menuLabel.labelText.text = txt[i]; //Изменяем текст кнопки
-				menuItems[i].menuLabel.labelText.mouseEnabled = false; //И отключаем возможность выделения текста
+				menuItems[i].labelText.text = txt[i]; //Изменяем текст кнопки
+				menuItems[i].labelText.mouseEnabled = false; //И отключаем возможность выделения текста
 				menuItems[i].buttonMode = true; //Делаем из объекта кнопки кнопку, чтоб указатель мыши был рукой
-				
-				//Запуск анимации кнопок меню с небольшой задержкой, чтобы они были несинхронные
-				TweenMax.delayedCall(Math.random()*2, function(){
-					menuItems[animationIndex].play();
-					animationIndex++;
-			    });
-				
 				addChild(menuItems[i]);
 			}
 			 //Устанавливаем слушатели событий для мыши и кнопок клавиатуры
@@ -103,7 +96,7 @@
 				if (newGameSelected){ //Если ранее был выбран пункт меню "Новая игра"
 					newGameSelected = false; //Сбрасываем флаг новой игры
 					for(var i:int = 0; i < menuItemsNum; i++){ //Для каждой из кнопок
-						menuItems[i].menuLabel.labelText.text = txt[i]; //Сбрасываем текст каждой кнопки на начальный
+						menuItems[i].labelText.text = txt[i]; //Сбрасываем текст каждой кнопки на начальный
 						menuItems[i].alpha = 1; //Снова отображаем все кнопки
 					}
 				}
@@ -116,7 +109,6 @@
 		
 		//Функция нажатия кнопок меню (как мышью, так и клавиатурой)
 		private function menuButtonHandler(e:MouseEvent = null){
-			//trace(currentIndex + ': ' + txt[currentIndex]);
 			var destination:String;
 			
 			if (newGameSelected){
@@ -152,7 +144,7 @@
 			newGameSelected = true; //Меняем флаг выбора сложности
 			for(var i:int = 0; i < menuItemsNum; i++){ //Меняем названия кнопок
 				try{
-					menuItems[i].menuLabel.labelText.text = difficulties[i];
+					menuItems[i].labelText.text = difficulties[i];
 				}
 				catch (e:Error){
 					menuItems[i].alpha = 0;

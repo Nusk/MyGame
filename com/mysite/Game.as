@@ -13,18 +13,17 @@
 	public class Game extends MovieClip {
 		private var hero:Hero; //Объект игрока
 		private var key:KeyObject; //Клавиши
-		private var screen:MovieClip;
-		private var difficulty:int = MovieClip(parent).getDifficulty();
+		private var screen:MovieClip; //Экран для анимации
+		private var difficulty:int = MovieClip(parent).getDifficulty(); //Копируем уровень сложности из главного объекта
 		private var isJumping:Boolean = false; //Флаг прыжка
 		private var isOnFloor:Boolean = true; //Флаг соприкосновения с полом
-		private var jumpStrength:int; //Сила прыжка
+		private var jumpStrength:Number; //Сила прыжка
 		private var isGettingStrength:Boolean = false; //Флаг, обозначающий изменения силы прыжка
 		private var isReadyToJump:Boolean = false; //Флаг прыжка
-		private var jumpMinimalStrength:int = 5;
 		private var gravityStrength:Number = 0.9; //Контстанта гравитации
 		private var isShooting:Boolean = false; //Флаг стрельбы
-		private var speedY:Number = 0; //Скорость игрока
-		private var maxSpeedY:int = 25; //Максимальная скорость игрока
+		private var speedY:Number = 0; //Скорость игрока по оси У (по оси Х не требуется)
+		private var maxSpeedY:int = 25; //Максимальная скорость игрока по оси У
 		private var levelArray:Array = new Array(); //Двухмерный массив для координат блоков земли
 		private var gameSpeed:int = 5 + 5 * difficulty;; //Активная скорость игры. Начальное значение 5, максимальное - 25
 		private var increaseGameSpeedDelay:int = 0; //Шаг увеличения скорости игры (в секундах)
@@ -35,22 +34,24 @@
 		private var clouds:Clouds = new Clouds(); //Задний фон: облака
 		private var metersLeft:int = 1000 + 500 * difficulty; //Сколько метров осталось в зависимости от уровня сложности
 		private var ammo:int = 6; //Кол-во патронов
-		private var lives:int = 3 + (3 - difficulty); //Кол-во жизней, зависит от сложности игры
+		private var lives:int = 3 + (2 - difficulty); //Кол-во жизней, зависит от сложности игры
 		private var immortal:int = 2 * int(stage.frameRate); //Бессмертие (чтобы не умирать, если вдруг появился на бабке)
 		private var sounds:Object; //Массив звуков (берётся из основного объекта Base)
-		private var thisGame:Object;
-		private var isPaused:Boolean = false;
-		private var pauseScreen:Pause = new Pause();
-		private var bag:String = '';
+		private var thisGame:Object; //Сюда сохраняем объект игры для использования его во вложенных функциях или при вызове функций других объектов, т.к. использования объекта
+						 			 //игры по this будет там недоступно (this ссылается на другой объект
+		private var isPaused:Boolean = false; //Флаг паузы игры
+		private var pauseScreen:Pause = new Pause(); //Объект (экран) паузы
+		private var bag:String = ''; //Переменная для переключения типа анимации героя
 		
 		public function Game() {
-			var notEmpty:Boolean = false, block:Object;
+			var notEmpty:Boolean = false, block:Object; //Временные переменные
+			
 			sounds = MovieClip(parent).getSounds(); //Берём звуки из главного объекта
-			hero = new Hero();
-			hero.scaleX = -0.4;
-			hero.scaleY = 0.4;
-			hero.x = 250;
-			livesDisplay.txt.text = String(lives);
+			hero = new Hero(); //Создаём новый объект класса Hero
+			hero.scaleX = -0.4; //Уменьшаем его до размера в 40% и поворочиваем на 180 градусов по Х
+			hero.scaleY = 0.4; //И уменьшаем по оси У
+			hero.x = 250; //Перемещаем его на начальную позицию Х (она на протяжении всей игры остаётся неизменной)
+			livesDisplay.txt.text = String(lives); //Записываем кол-во жизней в текстовое поле объекта livesDisplay (изначально находится на сцене) объекта Game
 			key = new KeyObject(stage);
 			increaseGameSpeed();
 			this.addChild(background);
@@ -61,7 +62,7 @@
 			this.setChildIndex(meter, this.numChildren-1); //Счётчик оставшихся метров
 			this.setChildIndex(magazine, this.numChildren-1); //Счётчик патронов
 			this.setChildIndex(livesDisplay, this.numChildren-1); //Счётчик жизней
-			MovieClip(parent).setChildIndex(MovieClip(parent).soundButton, MovieClip(parent).soundButton.parent.numChildren-1); //Кнопку переключения звука
+			MovieClip(parent).setChildIndex(MovieClip(parent).soundButton, MovieClip(parent).numChildren-1); //Кнопку переключения звука
 			this.addChild(hero);
 			
 			levelArray[0] = new Array();
@@ -69,8 +70,9 @@
 			levelArray[0][0] = {obj: null, type: -1}; //Создаём пустые объекты для цикла
 			levelArray[1][0] = {obj: null, type: -1};
 			
-			for (var i:int = 0; i < 5; i++){
-				block = createNextBlock(levelArray[0][i].type, true);
+			for (var i:int = 0; i < 5; i++){ //Создание новых блоков землю
+				notEmpty = true;
+				block = createNextBlock(levelArray[0][i].type);
 				levelArray[0].push({obj: block.obj, type: block.type});
 				if(block.type > -1){
 					notEmpty = false;
@@ -79,7 +81,7 @@
 					levelArray[0][levelArray[0].length-1].obj.y = 250;
 				}
 				
-				block = createNextBlock(levelArray[1][i].type, true);
+				block = createNextBlock(levelArray[1][i].type, notEmpty);
 				levelArray[1].push({obj: block.obj, type: block.type});
 				if(block.type > -1){
 					this.addChild(levelArray[1][levelArray[1].length-1].obj);
@@ -87,11 +89,7 @@
 					levelArray[1][levelArray[1].length-1].obj.y = 500;
 				}
 			}
-			/*
-			for(var t:Object in levelArray[0]){
-  				trace(t + " : " + levelArray[0][t].type);
-			}
-			*/
+			
 			levelArray[0].splice(0, 1);
 			levelArray[1].splice(0, 1);
 			
@@ -106,7 +104,6 @@
 			pauseScreen.y = stage.stageWidth / 2 - pauseScreen.height/2 + 50;
 			
 			jumpMeter.steps.mask = jumpMeter.strengthMask;
-			jumpMeter.jumpMinimalStrength.y = 52 * jumpMinimalStrength;
 			
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, keyDownHandler);
 			
@@ -119,6 +116,7 @@
 			metersLeft--;
 			
 			moveScreen(); //"Бежим", т.е. двигаем задний фон и блоки земли
+			
 			if(levelArray[0][1].type > -1 && levelArray[0][1].obj.hitbox.hitTestPoint(hero.x - 20, hero.y + 70, true) || 
 			   levelArray[0][2].type > -1 && levelArray[0][2].obj.hitbox.hitTestPoint(hero.x - 20, hero.y + 70, true) && speedY > 0){
 				hero.y = 190;
@@ -167,26 +165,21 @@
 				sounds['shot'+Math.floor(Math.random()*3+1)].play();
 				hero.addEventListener("animation_shot_end", shotEnded);
 			}
+			
 			if(isOnFloor){ //Игрок на земле
 				speedY = 0;
 				isJumping = false;
 				if(!isJumping){ //Если игрок ещё не находится в прыжке
-					if (key.isDown(key.UP)){ //При нажатии стрелки вверх
-						if (jumpStrength > 5){ //Флаг готовности к прыжку. Минимальная сила, нажная для прыжка: 5
+					if (key.isDown(key.UP) && speedY >= 0){ //При нажатии стрелки вверх
 							isReadyToJump = true;
-						}
-						else{
-							isReadyToJump = false;
-						}
-						jumpStrength += 3;
-						jumpMeter.strengthMask.height = jumpStrength * (jumpMeter.steps.height / 23);
+							jumpStrength += 2.5;
+							jumpMeter.strengthMask.height = jumpStrength * (jumpMeter.steps.height / 23);
+							
 						if (jumpStrength >= 30){ //Прыгаем автоматически при достижении максимальной силы прыжка
 							isJumping = true; //Отключаем возможность прыгнуть, пока не приземлились
 							isReadyToJump = false;
 							speedY = -jumpStrength;
-							jumpStrength = 10;
 							hero.gotoAndPlay('jump' + bag);
-							shotEnded(null);
 							hero.addEventListener("animation_shot_end", jumpEnded); //Слушатель событий для окончания анимации (событие создаётся в последней кадре мувиклипа
 							sounds['jump'+Math.floor(Math.random()*3+1)].play(); //Звук прыжка
 							isShooting = false;
@@ -201,22 +194,22 @@
 						isJumping = true; //Отключаем возможность прыгнуть, пока не приземлились
 						isReadyToJump = false;
 						speedY = -jumpStrength;
+						//hero.y = hero.y - 200;
 						hero.gotoAndPlay('jump' + bag);
 						shotEnded(null);
 						isShooting = false;
 						hero.addEventListener("animation_jump_end", jumpEnded); //Слушатель событий для окончания анимации (событие создаётся в последней кадре мувиклипа
 					}
-					//sounds[1].play();
 				}
 			}
 			else{
-				if (speedY < maxSpeedY){
-					speedY += gravityStrength;
+				speedY += gravityStrength;
+				if (speedY > maxSpeedY){
+					speedY = maxSpeedY;
 				}
+				
 				if (speedY < 0){
-					if (!isJumping){
-						isJumping = true;
-					}
+					isJumping = true;
 				}
 			}
 			
@@ -230,6 +223,7 @@
 					hitByBabkas = true;
 				}
 			}
+			
 			if (hero.y > 600 || hitByBabkas){
 				if (immortal <= 0){
 					if (hitByBabkas){
@@ -268,20 +262,31 @@
 			hero.removeEventListener("animation_shot_end", shotEnded); //Слушатель событий для окончания анимации (событие создаётся в последней кадре мувиклипа
 		}
 		
+		//Функция создания блоков
 		private function createNextBlock(previousBlock:int, notEmpty:Boolean = false):Object{
 			var frame:int, newBlock:Floor;
+			
 			if (previousBlock == -1 || (notEmpty && previousBlock == -1)){ //Если предыдущий блок был пустым (т.е. блока не было)
-				if (!notEmpty) frame = Math.floor(Math.random()*4-1); //То создаём начинающий, единичный или пустой блок
-				else frame = Math.floor(Math.random()*4-1); //То создаём начинающий или единичный блок
+				trace(1);
+				if (!notEmpty){
+					frame = Math.floor(Math.random()*3 - 1); //То создаём начинающий, единичный или пустой блок
+					if (frame == 0) frame = 3;
+				}
+				else{
+					frame = Math.floor(Math.random()*2 + 1); //То создаём начинающий или единичный блок
+				}
 			}
-			else if ((previousBlock == 0 || previousBlock == 1 || previousBlock == 4) && !notEmpty){ //Если предыдущий блок был единичным
+			else if ((previousBlock == 1 || previousBlock == 2 || previousBlock == 5) && !notEmpty){ //Если предыдущий блок был единичным
+				trace(2);
 				frame = -1; //То следующий будет пустым
 			}
-			else if (previousBlock == 2 || previousBlock == 3){ //Если предыдущий блок был начинающим или продолжающим
-				frame = Math.floor(Math.random()*2 + 3); //То создаём продолжающий или заканчивающий блок
+			else if (previousBlock == 3 || previousBlock == 4){ //Если предыдущий блок был начинающим или продолжающим
+				trace(3);
+				frame = Math.floor(Math.random()*2.99 + 3); //То создаём продолжающий или заканчивающий блок
 			}
 			else if (notEmpty){ //Во всех других случаях если функции был передан параметр notEmpty = true
-				frame = Math.floor(Math.random()+1); //То создаём одиночный блок
+				trace(4);
+				frame = Math.floor(Math.random() + 1); //То создаём одиночный блок
 			}
 			
 			if (frame < 0){ //Если был создан пустой блок
@@ -348,22 +353,14 @@
 					}
 				}
 				else{
-					isPaused = false;
-					thisGame.removeChild(pauseScreen);
-					switchScreen.alpha = 0;
-					thisGame.addEventListener(Event.ENTER_FRAME, enterFrameHandler); //Запускаем игру
-					pauseScreen.yes.removeEventListener(MouseEvent.CLICK, yesClicked);
-					pauseScreen.no.removeEventListener(MouseEvent.CLICK, noClicked);
-					hero.play();
-					for(i = 0; i < enemies.length; i++){
-						enemies[i].play();
-					}
+					noClicked(null);
 				}
 			}
 		}
 		
 		private function moveScreen():void{
 			var speed:Number = gameSpeed/2 + 2;
+			
 			if (clouds.alpha == 0){ //Если облака скрыты, то нет и нужны их перемещать
 				clouds.x -= gameSpeed/5;
 				if (clouds.x <= -800){
@@ -375,6 +372,7 @@
 			if (background.x <= -800){
 				background.x = 0;
 			}
+			
 			for (var n:int = 0; n < enemies.length; n++){ //Двигаем бабок
 				enemies[n].x -= speed; //Двигаем бабку по оси Х
 				if (enemies[n].x < -100){ //Если бабка уехала за экран
@@ -384,6 +382,7 @@
 					n--; //Подстраиваем цикл
 				}
 			}
+			
 			for (var i:int = 0; i < 5; i++){
 				if (levelArray[0][i] && levelArray[0][i].type > -1){
 					levelArray[0][i].obj.x -= speed;
@@ -414,6 +413,7 @@
 						trace('Nothing was deleted!');
 					}
 				}
+				
 				levelArray[0].splice(0, 1);
 				levelArray[1].splice(0, 1);
 				
@@ -432,7 +432,6 @@
 				block = createNextBlock(levelArray[1][levelArray[1].length-1].type, notEmpty);
 				levelArray[1].push({obj: block.obj, type: block.type});
 				if(block.type > -1){
-					notEmpty = false;
 					this.addChild(levelArray[1][levelArray[1].length-1].obj);
 					levelArray[1][levelArray[1].length-1].obj.x = (levelArray[1].length - 1) * 200;
 					levelArray[1][levelArray[1].length-1].obj.y = 500;
@@ -441,18 +440,19 @@
 			}
 		}
 		
-		private function createBabka(position:int):void{
+		private function createBabka(positionY:int):void{
 			var chance:Number = Math.random();
 			if (chance > 0.75){
 				enemies.push(new Babka());
 				enemies[enemies.length-1].x = 900;
-				enemies[enemies.length-1].y = position;
+				enemies[enemies.length-1].y = positionY;
 				this.addChild(enemies[enemies.length-1]);
 			}
 		}
 		
 		private function die():void{
 			isShooting = false; //Снова позволяем стрелять
+			isOnFloor = false;
 			if (lives > 0){
 				if (immortal <= 0){
 					lives--; //Отнимаем жизни только, если герой уже смертен
@@ -500,6 +500,7 @@
 					TweenMax.delayedCall(2.7, function():void{
 						TweenMax.to(screen, 2, {alpha:0});
 						bag = '_bag'; //Для дальнейшей анимации с рюкзаком
+						hero.gotoAndPlay('run_bag');
 						resume();
 					});
 				});
@@ -529,8 +530,13 @@
 				TweenMax.to(MovieClip(parent).getBackgroundMusic(), 2, {volume:0}); //Постепенно заглушаем музыку
 				MovieClip(parent).getBackgroundMusic().stop();
 				sounds['happyend'].play();
-				winScreen.play();
 				TweenMax.to(MovieClip(parent).getBackgroundMusic(), 2, {volume:1}); //Постепенно включаем музыку
+				winScreen.play();
+				/*TweenMax.delayedCall(10, function():void{
+					stage.removeEventListener(KeyboardEvent.KEY_DOWN, keyDownHandler);
+					MovieClip(parent).addChild(new Menu());
+					gotoAndPlay('menu');
+				});*/
 				return false;
 			}
 			hero.y = 0; //Перемещаем персонажа наверх
@@ -539,7 +545,7 @@
 			ammo = 6; //Перезаряжаем пистолет
 			magazine.gotoAndPlay(0); //Снова рисуем все шесть патронов
 			level++; //Увеличиваем активный уровень
-			lives += 3 - difficulty; //Прибавляем жизни, зависит от сложности игры
+			lives += 2 - difficulty; //Прибавляем жизни, зависит от сложности игры
 			if (level == 1){ //В замке облаков нет
 				clouds.alpha = 0; //Скрываем облака
 			}

@@ -15,7 +15,7 @@
 	import flash.media.SoundMixer;
 	
 	public class Base extends MovieClip {
-		//глобальные переменные
+		//Глобальные переменные
 		private var difficulty:int = 0;
 		private var sounds:Object = new Object();
 		private var bgMusic:SoundChannel;
@@ -23,7 +23,7 @@
 		
 		//--------------------- ДЕЛАЕМ ЗВУК
 		public function Base() {
-			addChild(new Menu());
+			addChild(new Menu()); //Создаём новое меню
 			sounds['shot1'] = new sShot1(); //Звук стрельбы 1
 			sounds['shot2'] = new sShot2(); //Звук стрельбы 2
 			sounds['shot3'] = new sShot3(); //Звук стрельбы 3
@@ -35,7 +35,7 @@
 			sounds['jump3'] = new sJump3(); //Звук прыжка 3
 			sounds['die1'] = new sDie1(); //Звук смерти игрока 1
 			sounds['die2'] = new sDie2(); //Звук смерти игрока 2
-			sounds['die3'] = new sDie3(); //Звук смерти игрока 3
+			sounds['die3'] = new sDie3(); //Звук смерти игрока 393
 			sounds['fall1'] = new sFall1(); //Звук падения игрока 1
 			sounds['fall2'] = new sFall2(); //Звук падения игрока 2
 			sounds['fall3'] = new sFall3(); //Звук падения игрока 3
@@ -43,7 +43,9 @@
 			sounds['bg2'] = new sBg2(); //Музыка заднего фона
 			sounds['bg3'] = new sBg3(); //Музыка заднего фона
 			sounds['happyend'] = new sHappyend(); //Музыка хэппиэнда
+			
 			bgMusic = sounds['bg' + Math.floor(Math.random()*3+1)].play(); //Создаём новый звуковой канал и сохраняем туда плейбек звукового файлв
+			
 			bgMusic.addEventListener(Event.SOUND_COMPLETE, function(e:Event):void{
 				bgMusic = sounds['bg'+Math.floor(Math.random()*3+1)].play();
 			}); //Повторяем музыку, когда она кончается

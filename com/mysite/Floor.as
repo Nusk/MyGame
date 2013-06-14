@@ -4,7 +4,7 @@
 	public class Floor extends MovieClip {
 		
 		public function Floor(frameNumber) {
-			this.gotoAndPlay(frameNumber + 1);
+			this.gotoAndStop(frameNumber);
 		}
 	}
 }

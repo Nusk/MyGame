@@ -12,20 +12,20 @@
 		
 		public function Tutorial(){
 			thisObject = this;
-			MovieClip(parent).setChildIndex(MovieClip(parent).soundButton, MovieClip(parent).soundButton.parent.numChildren-1); //Перемещаем енопку переключения звука наверх
-			stage.addEventListener(KeyboardEvent.KEY_DOWN, action);
-			btn.addEventListener(MouseEvent.CLICK, action);
+			MovieClip(parent).setChildIndex(MovieClip(parent).soundButton, MovieClip(parent).numChildren-1); //Перемещаем кнопку переключения звука наверх
+			stage.addEventListener(KeyboardEvent.KEY_DOWN, action); //Слушатель события по нажатию клавиатуры
+			btn.addEventListener(MouseEvent.CLICK, action); //Слушатель события клику мыши
 		}
 					  
-		function action(e:Event):void{
+		function action(e:Event):void{ //Функция, которую вызывают слушатели событий
 			if (this.currentFrame < 4){ //Если не достигли последнего фрейма,
 				this.gotoAndStop(currentFrame + 1); //То переходим на следующий
 			}
 			else{
-				stage.removeEventListener(KeyboardEvent.KEY_DOWN, action);
+				stage.removeEventListener(KeyboardEvent.KEY_DOWN, action); //Удаляем слушатели событий
 				btn.removeEventListener(MouseEvent.CLICK, action);
-				MovieClip(parent).addChild(new Menu());
-				MovieClip(parent).gotoAndPlay('menu');
+				MovieClip(parent).addChild(new Menu()); //Создаём новый объект меню, попутно добавляя его на сцену в объекте Base
+				MovieClip(parent).gotoAndPlay('menu'); //И переключаем кадр на метку "меню"
 			}
 		}
 	}

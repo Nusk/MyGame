@@ -5,8 +5,9 @@
 	
 	public class Babka extends MovieClip {
 		private var dead:Boolean = false;
+		
 		public function Babka() {
-			this.scaleX = this.scaleY = 0.5
+			this.scaleX = this.scaleY = 0.5;
 		}
 		
 		public function hit():void{
