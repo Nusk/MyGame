@@ -14,6 +14,8 @@
 		
 		private var menuItems:Array = new Array(); //Тут будут храниться кнопки
 		private var txt:Array = ["Новая игра", "Что делать?", "Выйти"]; //Массив, в котором хранятся тексты кнопок = кнопок
+		private var difficulties:Array = ["Лехко!", "Не лехко", "Трудна"]; //Массив текста сложности игры
+		private var newGameSelected:Boolean = false; //Флаг выбора новой игры
 		private var menuItemsNum = txt.length; //Длина массива с кнопками
 		private var currentIndex:int = 0; //Активная кнопка
 		private var activeButton:int = 0; //Выделеная кнопка
@@ -30,7 +32,7 @@
 		
 		private function init(e:Event){ //Тут будем создавать меню
 			removeEventListener(Event.ADDED_TO_STAGE, init); //удаляем уже ненужный слушатель событий
-			//MovieClip(parent).setChildIndex(MovieClip(parent).soundControl, MovieClip(parent).soundControl.parent.numChildren-1); //Помещаем значок звука на верх
+			MovieClip(parent).setChildIndex(MovieClip(parent).soundButton, MovieClip(parent).soundButton.parent.numChildren-1); //Перемещаем енопку переключения звука наверх
 			menuBuilder(); //А потом, собственно, создаём меню
 			animatePrincess(); //Помимо этого запускаем анимацию прицессы
 		}
@@ -98,10 +100,15 @@
 				menuButtonHandler(); //Вызываем функцию для дальнейшей обработки в зависимости от активной кнопки
 			}
 			else if(e.keyCode == 27){ //Была нажата кэскейп
-				menuItemsNum = txt.length; //И ставим обратно переменную общего кол-ва кнопок
-				for(var i:int = 0; i < menuItemsNum; i++){
-					menuItems[i].menuLabel.txt.text = txt[i]; //Сбрасываем текст каждой кнопки на начальный
-					menuItems[i].alpha = 1; //Снова отображаем все кнопки
+				if (newGameSelected){ //Если ранее был выбран пункт меню "Новая игра"
+					newGameSelected = false; //Сбрасываем флаг новой игры
+					for(var i:int = 0; i < menuItemsNum; i++){ //Для каждой из кнопок
+						menuItems[i].menuLabel.labelText.text = txt[i]; //Сбрасываем текст каждой кнопки на начальный
+						menuItems[i].alpha = 1; //Снова отображаем все кнопки
+					}
+				}
+				else{ //а если не выбран пункт меню "New game", то просто:
+					fscommand("quit"); //Выход из игры :) (в дебаг-плеере программы Adobe Flash не работает!)
 				}
 			}
 			updateMenu();
@@ -112,17 +119,24 @@
 			//trace(currentIndex + ': ' + txt[currentIndex]);
 			var destination:String;
 			
-			switch(currentIndex){ //Описываем, что будет происходить по нажатию разных пунктов меню
-				case 0: //Новая игра
-					destination = "game_new";
-					break;
-				case 1: //About
-					destination = "game_tutorial";
-					break;
-				case 2: //Exit
-					fscommand("quit"); //Выходим из игры
-				default:
-					destination = "game_menu";
+			if (newGameSelected){
+				destination = "game_intro"; //Если мы в меню выбора сложности игры, выбор любого пункта запустит игру
+				MovieClip(parent).setDifficulty(currentIndex); //Сохраняем выбранный уровень сложности в глобальном объекте Base
+				newGameSelected = false;
+			}
+			else{
+				switch(currentIndex){ //Описываем, что будет происходить по нажатию разных пунктов меню
+					case 0: //Новая игра
+						choseDifficulty();
+						return;
+					case 1: //About
+						destination = "game_tutorial";
+						break;
+					case 2: //Exit
+						fscommand("quit"); //Выходим из игры
+					default:
+						destination = "game_menu";
+				}
 			}
 			//Удаляем слушатели событий для действия клавиатуры и мыши
 			stage.removeEventListener(KeyboardEvent.KEY_DOWN, keyDownHandler); //Слушатель событий нажатия кнопок (общий для всей сцены)
@@ -132,6 +146,18 @@
 			}
 			MovieClip(parent).gotoAndPlay(destination); //Перепрыгиваем к пункту destination в временной линии
 			MovieClip(parent).removeChild(this); //А после удаляем меню с экрана, т.к. оно больше не нужно (сам объект не удаляем)
+		}
+		
+		private function choseDifficulty():void{
+			newGameSelected = true; //Меняем флаг выбора сложности
+			for(var i:int = 0; i < menuItemsNum; i++){ //Меняем названия кнопок
+				try{
+					menuItems[i].menuLabel.labelText.text = difficulties[i];
+				}
+				catch (e:Error){
+					menuItems[i].alpha = 0;
+				}
+			}
 		}
 		
 		//Функция навигации по меню с помощью мыши
