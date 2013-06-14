@@ -23,8 +23,8 @@
 		private var jumpMinimalStrength:int = 5;
 		private var gravityStrength:Number = 0.9; //Контстанта гравитации
 		private var isShooting:Boolean = false; //Флаг стрельбы
-		private var speedY:Number = 0; //Скорость игрока по оси У (по оси Х не требуется)
-		private var maxSpeedY:int = 25; //Максимальная скорость игрока по оси У
+		private var speedY:Number = 0; //Скорость игрока
+		private var maxSpeedY:int = 25; //Максимальная скорость игрока
 		private var levelArray:Array = new Array(); //Двухмерный массив для координат блоков земли
 		private var gameSpeed:int = 5 + 5 * difficulty;; //Активная скорость игры. Начальное значение 5, максимальное - 25
 		private var increaseGameSpeedDelay:int = 0; //Шаг увеличения скорости игры (в секундах)
